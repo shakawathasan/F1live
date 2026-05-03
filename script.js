@@ -105,121 +105,161 @@ function populateRaceSchedule() {
 
 // Video player functionality
 function initVideoPlayer() {
-  const video = document.getElementById('main-video');
-  const playPauseBtn = document.getElementById('play-pause');
-  const playIcon = playPauseBtn.querySelector('.play-icon');
-  const pauseIcon = playPauseBtn.querySelector('.pause-icon');
-  const muteUnmuteBtn = document.getElementById('mute-unmute');
-  const volumeIcon = muteUnmuteBtn.querySelector('.volume-icon');
-  const muteIcon = muteUnmuteBtn.querySelector('.mute-icon');
+  const iframe = document.getElementById('custom-video');
+  const videoContainer = document.getElementById('video-wrapper');
+  const brightnessSlider = document.getElementById('brightness-slider');
   const volumeSlider = document.getElementById('volume-slider');
-  const fullscreenBtn = document.getElementById('fullscreen');
-  const progressBar = document.querySelector('.progress');
-  const progressContainer = document.querySelector('.progress-bar');
-  const timeDisplay = document.querySelector('.time-display');
-  
-  // Play/Pause
-  playPauseBtn.addEventListener('click', togglePlayPause);
-  video.addEventListener('click', togglePlayPause);
-  
-  function togglePlayPause() {
-    if (video.paused) {
-      video.play();
-      playIcon.classList.add('hidden');
-      pauseIcon.classList.remove('hidden');
-    } else {
-      video.pause();
-      playIcon.classList.remove('hidden');
-      pauseIcon.classList.add('hidden');
-    }
+  const fullsizeBtn = document.getElementById('fullsize-toggle');
+
+  let currentBrightness = 100;
+  let currentOpacity = 1;
+
+  function updateIframeFilter() {
+    if (!iframe) return;
+    iframe.style.filter = `brightness(${currentBrightness}%) opacity(${currentOpacity})`;
   }
-  
-  // Mute/Unmute
-  muteUnmuteBtn.addEventListener('click', toggleMute);
-  
-  function toggleMute() {
-    video.muted = !video.muted;
-    
-    if (video.muted) {
-      volumeIcon.classList.add('hidden');
-      muteIcon.classList.remove('hidden');
-      volumeSlider.value = 0;
-    } else {
-      volumeIcon.classList.remove('hidden');
-      muteIcon.classList.add('hidden');
-      volumeSlider.value = video.volume * 100;
-    }
+
+  if (brightnessSlider) {
+    brightnessSlider.addEventListener('input', () => {
+      currentBrightness = Number(brightnessSlider.value);
+      updateIframeFilter();
+    });
   }
-  
-  // Volume slider
-  volumeSlider.addEventListener('input', () => {
-    const volume = volumeSlider.value / 100;
-    video.volume = volume;
-    
-    if (volume === 0) {
-      volumeIcon.classList.add('hidden');
-      muteIcon.classList.remove('hidden');
-      video.muted = true;
-    } else {
-      volumeIcon.classList.remove('hidden');
-      muteIcon.classList.add('hidden');
-      video.muted = false;
-    }
-  });
-  
-  // Fullscreen
-  fullscreenBtn.addEventListener('click', toggleFullscreen);
-  
-  function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      if (video.requestFullscreen) {
-        video.requestFullscreen();
-      } else if (video.webkitRequestFullscreen) {
-        video.webkitRequestFullscreen();
-      } else if (video.msRequestFullscreen) {
-        video.msRequestFullscreen();
+
+  if (volumeSlider) {
+    volumeSlider.addEventListener('input', () => {
+      const volumeValue = Number(volumeSlider.value);
+      currentOpacity = Math.max(0.35, Math.min(1, volumeValue / 100));
+      updateIframeFilter();
+    });
+  }
+
+  if (fullsizeBtn && videoContainer) {
+    fullsizeBtn.addEventListener('click', () => {
+      const isExpanded = videoContainer.classList.toggle('fullsize-mode');
+      document.body.classList.toggle('fullsize-active', isExpanded);
+      fullsizeBtn.textContent = isExpanded ? 'Exit Full Mood' : 'Full Size Mood';
+      if (isExpanded) {
+        videoContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
+    });
+  }
+
+  const video = document.querySelector('#main-video video');
+  if (video instanceof HTMLVideoElement) {
+    const playPauseBtn = document.getElementById('play-pause');
+    const playIcon = playPauseBtn?.querySelector('.play-icon');
+    const pauseIcon = playPauseBtn?.querySelector('.pause-icon');
+    const muteUnmuteBtn = document.getElementById('mute-unmute');
+    const volumeIcon = muteUnmuteBtn?.querySelector('.volume-icon');
+    const muteIcon = muteUnmuteBtn?.querySelector('.mute-icon');
+    const fullscreenBtn = document.getElementById('fullscreen');
+    const progressBar = document.querySelector('.progress');
+    const progressContainer = document.querySelector('.progress-bar');
+    const timeDisplay = document.querySelector('.time-display');
+
+    if (playPauseBtn) {
+      playPauseBtn.addEventListener('click', togglePlayPause);
+    }
+    video.addEventListener('click', togglePlayPause);
+
+    function togglePlayPause() {
+      if (video.paused) {
+        video.play();
+        playIcon?.classList.add('hidden');
+        pauseIcon?.classList.remove('hidden');
+      } else {
+        video.pause();
+        playIcon?.classList.remove('hidden');
+        pauseIcon?.classList.add('hidden');
       }
     }
+
+    if (muteUnmuteBtn) {
+      muteUnmuteBtn.addEventListener('click', toggleMute);
+    }
+
+    function toggleMute() {
+      video.muted = !video.muted;
+      if (video.muted) {
+        volumeIcon?.classList.add('hidden');
+        muteIcon?.classList.remove('hidden');
+        if (volumeSlider) volumeSlider.value = '0';
+      } else {
+        volumeIcon?.classList.remove('hidden');
+        muteIcon?.classList.add('hidden');
+        if (volumeSlider) volumeSlider.value = String(video.volume * 100);
+      }
+    }
+
+    if (volumeSlider) {
+      volumeSlider.addEventListener('input', () => {
+        const volume = Number(volumeSlider.value) / 100;
+        video.volume = volume;
+        if (volume === 0) {
+          volumeIcon?.classList.add('hidden');
+          muteIcon?.classList.remove('hidden');
+          video.muted = true;
+        } else {
+          volumeIcon?.classList.remove('hidden');
+          muteIcon?.classList.add('hidden');
+          video.muted = false;
+        }
+      });
+    }
+
+    if (fullscreenBtn) {
+      fullscreenBtn.addEventListener('click', toggleFullscreen);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        if (video.requestFullscreen) {
+          video.requestFullscreen();
+        } else if (video.webkitRequestFullscreen) {
+          video.webkitRequestFullscreen();
+        } else if (video.msRequestFullscreen) {
+          video.msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
+    }
+
+    video.addEventListener('timeupdate', updateProgress);
+    function updateProgress() {
+      const percent = (video.currentTime / video.duration) * 100;
+      if (progressBar) progressBar.style.width = `${percent}%`;
+      const currentMinutes = Math.floor(video.currentTime / 60);
+      const currentSeconds = Math.floor(video.currentTime % 60);
+      const durationMinutes = Math.floor(video.duration / 60) || 0;
+      const durationSeconds = Math.floor(video.duration % 60) || 0;
+      if (timeDisplay) {
+        timeDisplay.textContent = `${currentMinutes.toString().padStart(2, '0')}:${currentSeconds.toString().padStart(2, '0')} / ${durationMinutes.toString().padStart(2, '0')}:${durationSeconds.toString().padStart(2, '0')}`;
+      }
+    }
+
+    if (progressContainer) {
+      progressContainer.addEventListener('click', seek);
+    }
+
+    function seek(e) {
+      const percent = (e.offsetX / progressContainer.offsetWidth);
+      video.currentTime = percent * video.duration;
+    }
+
+    video.addEventListener('ended', () => {
+      playIcon?.classList.remove('hidden');
+      pauseIcon?.classList.add('hidden');
+      if (progressBar) progressBar.style.width = '0%';
+    });
   }
-  
-  // Progress bar
-  video.addEventListener('timeupdate', updateProgress);
-  
-  function updateProgress() {
-    const percent = (video.currentTime / video.duration) * 100;
-    progressBar.style.width = `${percent}%`;
-    
-    // Update time display
-    const currentMinutes = Math.floor(video.currentTime / 60);
-    const currentSeconds = Math.floor(video.currentTime % 60);
-    const durationMinutes = Math.floor(video.duration / 60) || 0;
-    const durationSeconds = Math.floor(video.duration % 60) || 0;
-    
-    timeDisplay.textContent = `${currentMinutes.toString().padStart(2, '0')}:${currentSeconds.toString().padStart(2, '0')} / ${durationMinutes.toString().padStart(2, '0')}:${durationSeconds.toString().padStart(2, '0')}`;
-  }
-  
-  // Click on progress bar to seek
-  progressContainer.addEventListener('click', seek);
-  
-  function seek(e) {
-    const percent = (e.offsetX / progressContainer.offsetWidth);
-    video.currentTime = percent * video.duration;
-  }
-  
-  // Reset UI when video ends
-  video.addEventListener('ended', () => {
-    playIcon.classList.remove('hidden');
-    pauseIcon.classList.add('hidden');
-    progressBar.style.width = '0%';
-  });
 }
 
 // Contact form handling
